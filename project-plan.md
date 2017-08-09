@@ -1,7 +1,7 @@
 
-## TODO: Download Simulator 
-Download the Term3 Simulator which contains the Path Planning Project from 
-https://github.com/udacity/self-driving-car-sim/releases.
+ 1. [ ] Download the Term3 Simulator which contains the Path Planning Project from [releases](https://github.com/udacity/self-driving-car-sim/releases/download/T3_v1.2/term3_sim_mac.zip)
+
+ 2. [ ] Install openssl, libuv, cmake, zlib. Build uWebSockets
 
 ## The Project Goals
 In this project the goal is to safely navigate around a virtual highway with other traffic that is 
