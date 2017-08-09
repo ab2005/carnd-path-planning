@@ -20,7 +20,7 @@ is provided as [text file](data/highway_map.csv).
 
 Each waypoint in the list contains  [x,y,s,dx,dy] values. x and y are the waypoint's map coordinate position, 
 the s value is the distance along the road to get to that waypoint in meters, the dx and dy values define the unit 
-normal vector pointing outward of the highway loop.\
+normal vector pointing outward of the highway loop. The highway's waypoints loop around so the frenet s value, distance along the road, goes from 0 to 6945.554.
 
 ### Goals
  1. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic 
@@ -32,3 +32,4 @@ when possible, note that other cars will try to change lanes too.
 3. The car should be able to make one complete loop around the 6946m highway. Since the car is trying to go 50 MPH, 
  it should take a little over 5 minutes to complete 1 loop. 
 4. Also the car should not experience total acceleration over 10 m/s^2 and jerk that is greater than 50 m/s^3.
+
