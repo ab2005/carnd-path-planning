@@ -8,22 +8,22 @@
   cmake .. && make
   ./path_planning
   ```
- 4. [ ] Understanding simulator parameters
- - Main car's localization Data (No Noise)
+ 4. [ ] Understand simulator parameters
+ 1. Main car's localization Data (No Noise)
    - "x" The car's x position in map coordinates
    - "y" The car's y position in map coordinates
    - "s" The car's s position in frenet coordinates
    - "d" The car's d position in frenet coordinates
    - "yaw" The car's yaw angle in the map
    - "speed" The car's speed in MPH
- - Previous path data given to the Planner
+ 2. Previous path data given to the Planner
    - "previous_path_x" The previous list of x points previously given to the simulator
    - "previous_path_y" The previous list of y points previously given to the simulator
    - *Note: Return the previous list but with processed points removed, can be a nice tool to show how far along the path has processed since last time.*
- - Previous path's end s and d values
+ 3. Previous path's end s and d values
    - "end_path_s" The previous list's last point's frenet s value
    - "end_path_d" The previous list's last point's frenet d value  
- - Sensor Fusion Data, a list of all other car's attributes on the same side of the road. (No Noise)
+ 4. Sensor Fusion Data, a list of all other car's attributes on the same side of the road. (No Noise)
    - "sensor_fusion" A 2d vector of cars:  
      - car's unique ID,
      - car's x position in map coordinates, 
@@ -32,7 +32,41 @@
      - car's y velocity in m/s, 
      - car's s position in frenet coordinates, 
      - car's d position in frenet coordinates.
-
+     
+### Algorithm
+#### Load up map values for waypoint's x,y,s and d normalized normal vectors
+```c++
+  // Load up map values for waypoint's x,y,s and d normalized normal vectors
+  vector<double> map_waypoints_x;
+  vector<double> map_waypoints_y;
+  vector<double> map_waypoints_s;
+  vector<double> map_waypoints_dx;
+  vector<double> map_waypoints_dy;
+  // Waypoint map to read from
+  string map_file_ = "../data/highway_map.csv";
+  // The max s value before wrapping around the track back to 0
+  double max_s = 6945.554;
+  ifstream in_map_(map_file_.c_str(), ifstream::in);
+  string line;
+  while (getline(in_map_, line)) {
+  	 istringstream iss(line);
+  	 double x;
+  	 double y;
+  	 float s;
+  	 float d_x;
+  	 float d_y;
+  	 iss >> x;
+  	 iss >> y;
+  	 iss >> s;
+  	 iss >> d_x;
+  	 iss >> d_y;
+  	 map_waypoints_x.push_back(x);
+  	 map_waypoints_y.push_back(y);
+  	 map_waypoints_s.push_back(s);
+  	 map_waypoints_dx.push_back(d_x);
+  	 map_waypoints_dy.push_back(d_y);
+  }
+```
 ## The Project Goals
 In this project the goal is to safely navigate around a virtual highway with other traffic that is 
 driving **+-10 MPH** of the 50 MPH speed limit. 
