@@ -1,7 +1,26 @@
 
+ ### TODO
  1. [ ] Download the Term3 Simulator which contains the Path Planning Project from [releases](https://github.com/udacity/self-driving-car-sim/releases/download/T3_v1.2/term3_sim_mac.zip)
-
  2. [ ] Install openssl, libuv, cmake, zlib. Build uWebSockets
+ 3. [ ] build, run
+  ```
+  mkdir build && cd build
+  cmake .. && make
+  ./path_planning
+  ```
+ 4. [ ] Understanding simulator parameters
+ - Main car's localization Data (No Noise)
+   - "x" The car's x position in map coordinates
+   - "y" The car's y position in map coordinates
+   - "s" The car's s position in frenet coordinates
+   - "d" The car's d position in frenet coordinates
+   - "yaw" The car's yaw angle in the map
+   - "speed" The car's speed in MPH
+ - Previous path data given to the Planner
+   - "previous_path_x" The previous list of x points previously given to the simulator
+   - "previous_path_y" The previous list of y points previously given to the simulator
+   - *Note: Return the previous list but with processed points removed, can be a nice tool to show how far along the path has processed since last time.*
+
 
 ## The Project Goals
 In this project the goal is to safely navigate around a virtual highway with other traffic that is 
