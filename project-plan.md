@@ -50,15 +50,17 @@ is provided as [text file](data/highway_map.csv).
 
 | x | y |s | dx | dy |
 | --- | --- | --- | --- | --- |
-| 784.6001 | 1135.571 | 0 | -0.02359831 | -0.9997216
+| 784.6001 | 1135.571 | 0 | -0.02359831 | -0.9997216 |
 | 815.2679 | 1134.93 | 30.6744785308838 | -0.01099479 | -0.9999396 | 
 | 844.6398 | 1134.911 | 60.0463714599609 | -0.002048373 | -0.9999979 | 
 | 875.0436 | 1134.808 | 90.4504146575928 | -0.001847863 | -0.9999983 | 
 
-Each waypoint in the list contains  [x,y,s,dx,dy] values. x and y are the waypoint's map coordinate position, 
-the s value is the distance along the road to get to that waypoint in meters, the dx and dy values define the unit 
-normal vector pointing outward of the highway loop. The highway's waypoints loop around so the frenet s value, distance along the road, goes from 0 to 6945.554.
-
+Each waypoint in the list contains  [x, y, s, dx, dy] values. 
+Where: 
+ - x and y are the waypoint's map coordinate position, 
+ - the s value is the distance along the road to get to that waypoint in meters. The highway's waypoints loop around so the frenet s value, distance along the road, goes from 0 to 6945.554.
+ - the dx and dy values define the unit normal vector pointing outward of the highway loop. 
+ 
 #### Load up map values for waypoint's x,y,s and d normalized normal vectors
 ```c++
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
