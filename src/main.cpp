@@ -8,6 +8,7 @@
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
+#include "spline.h"
 
 using namespace std;
 
@@ -188,7 +189,12 @@ int main() {
     map_waypoints_dy.push_back(d_y);
   }
   
-  h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  // start in lane 1
+  int lane = 1;
+  // target velocity = 49.5 mph
+  double REF_VEL = 49.5;
+  
+  h.onMessage([&REF_VEL,&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy,&lane](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -222,18 +228,109 @@ int main() {
           // vector<vector<double>>
           auto sensor_fusion = j[1]["sensor_fusion"];
           
+          int prev_size = previous_path_x.size();
+          float lane_center = 2 + 4 * lane;
+          
+//          if (prev_size > 0) {
+//            car_s = end_path_s;
+//          }
+//          
+//          bool too_close = false;
+//          
+//          // find ref_v to use
+//          for (int = 0; i < sensor_fusion.size(); i++) {
+//            float d = sensor_fusion[i][6];
+//            float dd = 2 + 4 * lane;
+//            // if car in my line
+//            if (d < dd + 2 && d > dd - 2) {
+//              double vx = sensor_fusion[i][3];
+//              double vy = sensor_fusion[i][4];
+//              double check_car_s = sensor_fusion[i][5];
+//              double check_speed = sqrt(vx * vx + vy * vy);
+//              // TODO:
+//            }
+//          }
+          
+          // Create a list of widedy spaced points, evenly spaced at 30 meters
+          // Later we'll interpolate these points with spline and use to generate next points
+          vector<double> pts_x;
+          vector<double> pts_y;
+          
+          // reference states: it is eather where the car is or it is the previious path end point
+          double ref_x = car_x;
+          double ref_y = car_y;
+          double ref_x_prev = car_x - cos(car_yaw);
+          double ref_y_prev = car_y - sin(car_yaw);
+          double ref_yaw = deg2rad(car_yaw);
+
+          if (prev_size > 1) {
+            ref_x = previous_path_x[prev_size - 1];
+            ref_y = previous_path_y[prev_size - 1];
+            ref_x_prev = previous_path_x[prev_size - 2];
+            ref_y_prev = previous_path_y[prev_size - 2];
+            ref_yaw = atan2(ref_y - ref_y_prev, ref_x - ref_x_prev);
+          }
+          
+          pts_x.push_back(ref_x_prev);
+          pts_x.push_back(ref_x);
+          pts_y.push_back(ref_y_prev);
+          pts_y.push_back(ref_y);
+          
+          // In Frenet add evenly 30 meters spaced points ahead of the starting reference
+          vector<double> next_wp0 = getXY(car_s + 30, lane_center, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+          vector<double> next_wp1 = getXY(car_s + 60, lane_center, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+          vector<double> next_wp2 = getXY(car_s + 90, lane_center, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+          pts_x.push_back(next_wp0[0]);
+          pts_x.push_back(next_wp1[0]);
+          pts_x.push_back(next_wp2[0]);
+          pts_y.push_back(next_wp0[1]);
+          pts_y.push_back(next_wp1[1]);
+          pts_y.push_back(next_wp2[1]);
+          
+          // Shift and rotate car reference angle to 0 degrees
+          for (int i = 0; i < pts_x.size(); i++) {
+            double shift_x = pts_x[i] - ref_x;
+            double shift_y = pts_y[i] - ref_y;
+            pts_x[i] = shift_x * cos(-ref_yaw) - shift_y * sin(-ref_yaw);
+            pts_y[i] = shift_y * cos(-ref_yaw) + shift_x * sin(-ref_yaw);
+          }
+          
+          // Spline
+          tk::spline s;
+          s.set_points(pts_x, pts_y);
+          // calulate how to break up spline point so that we travel at our desired reference velocity
+          double target_x = 30.;
+          double target_y = s(target_x);
+          double target_dist = sqrt(target_x * target_x + target_y * target_y);
+          double x_add_on = 0;
+          double step = target_dist / (.02 * REF_VEL / 2.24);
+          
+          // now we have a spline to fill the actual x, y points to use for the planner
           vector<double> next_x_vals;
           vector<double> next_y_vals;
           
-          // TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
-          // 0.5 meters = 25 m/sec = 90 km/h = 50 m/h
-          double dist_inc = 0.5;
-          for (int i = 0; i < 50; i++) {
-            double next_s = car_s + (i + 1) * dist_inc;
-            double next_d = 6; // stay in line
-            vector<double> xy = getXY(next_s, next_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-            next_x_vals.push_back(xy[0]);
-            next_y_vals.push_back(xy[1]);
+          // start with all previous points (the points car actually mooved)
+          for (int i = 0; i < previous_path_x.size(); i++) {
+            next_x_vals.push_back(previous_path_x[i]);
+            next_y_vals.push_back(previous_path_y[i]);
+          }
+          // then fill up the rest of our path planner(here we'll always output 50 points)
+          // Note: previous path is how many points car actually mooved
+          for (int i = 1; i <= 50 - previous_path_x.size(); i++) {
+            double x_point = x_add_on + target_x / step;
+            double y_point = s(x_point);
+            x_add_on = x_point;
+            
+            double x_ref = x_point;
+            double y_ref = y_point;
+            // rotate back to normal after rotating it earlier
+            x_point = x_ref * cos(ref_yaw) - y_ref * sin(ref_yaw);
+            y_point = y_ref * cos(ref_yaw) + x_ref * sin(ref_yaw);
+            x_point += ref_x;
+            y_point += ref_y;
+            
+            next_x_vals.push_back(x_point);
+            next_y_vals.push_back(y_point);
           }
           
           json msgJson;
