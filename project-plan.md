@@ -3,7 +3,7 @@
  
 In this project we have to develop a path planner that is able to create smooth, safe paths for the car to follow along a 3 lane virtual highway with other traffic that is  driving **-+10 MPH** of the 50 MPH speed limit.
 
-### The Project Goals
+## The Project Goals
 1. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic 
 when possible, note that other cars will try to change lanes too. 
 2. The car should avoid hitting other cars at all cost as well as driving inside of the marked road lanes at all times, 
@@ -11,6 +11,8 @@ when possible, note that other cars will try to change lanes too.
 3. The car should be able to make one complete loop around the 6946m highway. Since the car is trying to go 50 MPH, 
  it should take a little over 5 minutes to complete 1 loop. 
 4. Also the car should not experience total acceleration over 10 m/s^2 and jerk that is greater than 50 m/s^3.
+
+## Project 
 
 ### Track data
 The car's localization and sensor fusion data as well as a sparse map list of waypoints around the highway 
@@ -126,7 +128,7 @@ We have updates from the simulator as a JSON object:
 
 We use a simple spline-based method to generate jerk minimized trajectory. Following are steps on creating the car trajectory on every simulator iteration:
 
-#### Create a list of widedy spaced points, evenly spaced at 30 meters.
+#### 1. Create a list of widedy spaced points, evenly spaced at 30 meters
 Spline fit 5 points: two behing and three ahead in Cartesian space. Two points behind are taken from the end of the previous path provided by the simulator. In the beginning or when previous path is empty we compute the current car state using a trigonometric projection:
 ```c++
 // Create a list of widedy spaced points, evenly spaced at 30 meters.
@@ -169,7 +171,7 @@ pts_y.push_back(next_wp1[1]);
 pts_y.push_back(next_wp2[1]);
 ```          
 
-#### Interpolate sparce spline points with spline and generate next path points.
+#### 2. Interpolate sparce spline points with spline and generate next path points
 
 In order to generate evenly distributed path points we will shift and rotate car reference angle to 0 degrees:
 ```c++
@@ -224,5 +226,15 @@ for (int i = 1; i <= 50 - previous_path_x.size(); i++) {
 }
 ```
 
-Create a path planner that performs optimized lane changing, this means that the car only changes into a lane that improves its forward progress.
+### Planner
+
+Current implementation uses a simple state machine and a planning scheme to control the car. The car will prefer to stay in the current lane and drive in constant speed close to speed limit. If there is a car ahead in a close proximity with a slower speed then check if we can pass the car on the left ot right lane. If both lanes are available chose the lane with the highest score. If passing is not possible then slow down remaing in the same lane following the car ahead. 
+
+## Result and Reflection
+
+There are two parts of this project: one is how to generate smooth trajectories that meet the minimum requirement, another one is to plan a feasible trajectory for the car to drive as fast as possible avoiding incidents. Big parts of effort were generating smooth trajectories and tuning up state transitioining. Future work should include:
+
+Combine with MPC to find optimized trajectory. With MPC, using cost function we will be able to limit the speed and acceleration, and their variations.
+Implement a complete state machine to handle different sceneraios that could cause accidents. More traffic information should be incorporated in making decision on state change.
+Looking into ML technology on making decision.
 
