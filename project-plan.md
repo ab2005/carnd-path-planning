@@ -133,6 +133,7 @@ We have updates from the simulator as a JSON object:
 
 We use a simple spline-based method to generate jerk minimized trajectory. Following are steps on creating the car trajectory on every simulator iteration:
 
+#### Create a list of widedy spaced points, evenly spaced at 30 meters.
 Spline fit 5 points: two behing and three ahead in Cartesian space. Two points behind are taken from the end of the previous path provided by the simulator. In the beginning or when previous path is empty we compute the current car state using a trigonometric projection:
 ```c++
 // Create a list of widedy spaced points, evenly spaced at 30 meters.
@@ -174,6 +175,62 @@ pts_y.push_back(next_wp0[1]);
 pts_y.push_back(next_wp1[1]);
 pts_y.push_back(next_wp2[1]);
 ```          
+
+#### Interpolate sparce spline points with spline and generate next path points.
+
+In order to generate evenly distributed path points we will shift and rotate car reference angle to 0 degrees:
+```c++
+for (int i = 0; i < pts_x.size(); i++) {
+  double shift_x = pts_x[i] - ref_x;
+  double shift_y = pts_y[i] - ref_y;
+  pts_x[i] = shift_x * cos(-ref_yaw) - shift_y * sin(-ref_yaw);
+  pts_y[i] = shift_y * cos(-ref_yaw) + shift_x * sin(-ref_yaw);
+}
+```
+Now we will a spline to fill the actual x, y points to use for the planner:
+```c++
+tk::spline s;
+s.set_points(pts_x, pts_y);
+```
+We calulate how to break up spline point so that we travel at our desired reference velocity:
+```c++
+double target_x = 30.;
+double target_y = s(target_x);
+double target_dist = sqrt(target_x * target_x + target_y * target_y);
+double x_add_on = 0;
+double step = target_dist / (.02 * ref_velocity / 2.24);
+
+vector<double> next_x_vals;
+vector<double> next_y_vals;
+```
+We start with all previous points (the points car actually moved):
+```c++
+for (int i = 0; i < previous_path_x.size(); i++) { 
+  next_x_vals.push_back(previous_path_x[i]);
+  next_y_vals.push_back(previous_path_y[i]);
+}
+```
+Then we fill up the rest of our path planner rotating back to normal corrdinates since we've rotated it earlier. 
+
+Note: here we'll always output 50 points.
+```c++
+for (int i = 1; i <= 50 - previous_path_x.size(); i++) {
+  double x_point = x_add_on + target_x / step;
+  double y_point = s(x_point);
+  x_add_on = x_point;
+
+  double x_ref = x_point;
+  double y_ref = y_point;
+  // rotate back to normal after rotating it earlier
+  x_point = x_ref * cos(ref_yaw) - y_ref * sin(ref_yaw);
+  y_point = y_ref * cos(ref_yaw) + x_ref * sin(ref_yaw);
+  x_point += ref_x;
+  y_point += ref_y;
+
+  next_x_vals.push_back(x_point);
+  next_y_vals.push_back(y_point);
+}
+```
 
 Create a path planner that performs optimized lane changing, this means that the car only changes into a lane that improves its forward progress.
 
