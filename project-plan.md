@@ -187,7 +187,7 @@ for (int i = 0; i < pts_x.size(); i++) {
   pts_y[i] = shift_y * cos(-ref_yaw) + shift_x * sin(-ref_yaw);
 }
 ```
-Now we will a spline to fill the actual x, y points to use for the planner:
+Now we will use a spline to fill the actual x, y points to use for the planner:
 ```c++
 tk::spline s;
 s.set_points(pts_x, pts_y);
@@ -211,7 +211,6 @@ for (int i = 0; i < previous_path_x.size(); i++) {
 }
 ```
 Then we fill up the rest of our path planner rotating back to normal corrdinates since we've rotated it earlier. 
-
 Note: here we'll always output 50 points.
 ```c++
 for (int i = 1; i <= 50 - previous_path_x.size(); i++) {
