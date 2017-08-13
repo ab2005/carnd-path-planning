@@ -1,16 +1,9 @@
 
- ### TODO
- 1. [ ] Download the Term3 Simulator which contains the Path Planning Project from [releases](https://github.com/udacity/self-driving-car-sim/releases/download/T3_v1.2/term3_sim_mac.zip)
- 2. [ ] Install openssl, libuv, cmake, zlib. Build uWebSockets
- 3. [ ] build, run
-  ```
-  mkdir build && cd build
-  cmake .. && make
-  ./path_planning
-  ```
+ # Path Planning Project
+ 
+In this project we have to develop a path planner that is able to create smooth, safe paths for the car to follow along a 3 lane virtual highway with other traffic that is  driving **-+10 MPH** of the 50 MPH speed limit.
+
 ## The Project Goals
-In this project the goal is to safely navigate around a virtual highway with other traffic that is 
-driving **-10 MPH** of the 50 MPH speed limit.
 1. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic 
 when possible, note that other cars will try to change lanes too. 
 2. The car should avoid hitting other cars at all cost as well as driving inside of the marked road lanes at all times, 
