@@ -1,9 +1,9 @@
 
- # Path Planning Project
+ ## Path Planning Project
  
 In this project we have to develop a path planner that is able to create smooth, safe paths for the car to follow along a 3 lane virtual highway with other traffic that is  driving **-+10 MPH** of the 50 MPH speed limit.
 
-## The Project Goals
+### The Project Goals
 1. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic 
 when possible, note that other cars will try to change lanes too. 
 2. The car should avoid hitting other cars at all cost as well as driving inside of the marked road lanes at all times, 
@@ -88,7 +88,7 @@ We have updates from the simulator as a JSON object:
      - car's s position in frenet coordinates, 
      - car's d position in frenet coordinates.
 
-#### Load up track values
+### Load up track waypoints
 ```c++
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
   vector<double> map_waypoints_x;
