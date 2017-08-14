@@ -1,5 +1,5 @@
 
- ## Path Planning Project
+ # Path Planning Project
  
 In this project we have to develop a path planner that is able to create smooth, safe paths for the car to follow along a 3 lane virtual highway with other traffic that is  driving **-+10 MPH** of the 50 MPH speed limit.
 
@@ -12,9 +12,9 @@ when possible, note that other cars will try to change lanes too.
  it should take a little over 5 minutes to complete 1 loop. 
 4. Also the car should not experience total acceleration over 10 m/s^2 and jerk that is greater than 50 m/s^3.
 
-## Project 
+## Project implementation 
 
-### Track data
+### Understanding track data
 The car's localization and sensor fusion data as well as a sparse map list of waypoints around the highway 
 is provided as [text file](data/highway_map.csv).
 
@@ -31,8 +31,8 @@ Where:
  - the s value is the distance along the road to get to that waypoint in meters. The highway's waypoints loop around so the frenet s value, distance along the road, goes from 0 to 6945.554.
  - the dx and dy values define the unit normal vector pointing outward of the highway loop. 
 
-### Simulator data
-We have updates from the simulator as a JSON object:
+### Understanding simulator data
+While running our program we'll have updates from the simulator in the form of a JSON object:
 ```json
 ["telemetry",
   { 
@@ -90,7 +90,7 @@ We have updates from the simulator as a JSON object:
      - car's s position in frenet coordinates, 
      - car's d position in frenet coordinates.
 
-### Load up track waypoints
+### Loading track waypoints
 ```c++
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
   vector<double> map_waypoints_x;
@@ -124,9 +124,9 @@ We have updates from the simulator as a JSON object:
   }
 ```
 
-### Trajectory generation
+## Trajectory generation
 
-We use a simple spline-based method to generate jerk minimized trajectory. Following are steps on creating the car trajectory on every simulator iteration:
+We'll use a simple spline-based method to generate jerk minimized trajectory. Following are steps on creating the car trajectory on every simulator iteration:
 
 #### 1. Create a list of widedy spaced points, evenly spaced at 30 meters
 Spline fit 5 points: two behing and three ahead in Cartesian space. Two points behind are taken from the end of the previous path provided by the simulator. In the beginning or when previous path is empty we compute the current car state using a trigonometric projection:
