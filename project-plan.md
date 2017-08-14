@@ -227,7 +227,8 @@ for (int i = 1; i <= 50 - previous_path_x.size(); i++) {
 
 ## The Planner
 
-Our implementation uses a simple planning scheme with a state machine to control the car. The car will prefer to stay in the current lane and drive in constant speed close to speed limit. If there is a car ahead in a close proximity with a slower speed then check if it is safe to pass on the left ot right lane. If both lanes are available for passing the car ahead we chose the lane with the highest score. The score is computed based on the front/back cars speed and distance. If passing on both left and right lanes is not safe then we slow down and remain in the same lane following the car ahead accelerating when we have enough space ahead. 
+Our implementation uses a simple planning scheme with a state machine to control the car. The car will prefer to stay in the current lane and drive in constant speed close to speed limit. If there is a car ahead in a close proximity with a slower speed then we check if it is safe to change to the left ot right lane. If both lanes are available for safe passing of the car ahead we chose the lane with the highest score. The score is computed based on the closest cars speed and distance. If passing on both left and right lanes is not safe then we slow down and remain in the same lane following the car ahead accelerating only when we'll have enough space ahead. 
+
 
 ## Result and Reflection
 
