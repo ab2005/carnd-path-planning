@@ -231,7 +231,10 @@ Our implementation uses a simple planning scheme with a state machine to control
 
 ## Result and Reflection
 
-There are two parts of this project: one is how to generate smooth trajectories that meet the minimum requirement, another one is how to plan a feasible trajectory for the car to drive as fast as possible below the speed limit avoiding incidents. Big parts of effort are generating smooth trajectories and tuning up state transitioining. We were able to run 48 miles without accidents on the project track [`data/highway_map.csv`](data/highway_map.csv) using [Term 3 Simulator v1.2](https://github.com/udacity/self-driving-car-sim/releases/tag/T3_v1.2). We also were able to run 4 out 5 races on Bosch'c Path Planning Challenge track [`data/highway_map_bosch1.scv`](data/highway_map_bosch1.scv) using [Bosch Challenge Track 1 simulator](https://github.com/udacity/Bosch-Challenge/releases/tag/v1.0)   
+There are two parts of this project: one is how to generate smooth trajectories that meet the minimum requirement, another one is how to plan a feasible trajectory for the car to drive as fast as possible below the speed limit avoiding incidents. Big parts of effort are generating smooth trajectories and tuning up state transitioining. We were able to run 48 miles without accidents on the project track [`data/highway_map.csv`](data/highway_map.csv) using [Term 3 Simulator v1.2](https://github.com/udacity/self-driving-car-sim/releases/tag/T3_v1.2). 
+![path_planning_project_track](path_planning_project_track.jpg)
+
+We also were able to run 4 out 5 races on Bosch'c Path Planning Challenge track [`data/highway_map_bosch1.scv`](data/highway_map_bosch1.scv) using [Bosch Challenge Track 1 simulator](https://github.com/udacity/Bosch-Challenge/releases/tag/v1.0)   
 
 
 Future work should include:
