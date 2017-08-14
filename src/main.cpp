@@ -142,7 +142,7 @@ vector<double> getXY(double s, double d, vector<double> maps_s, vector<double> m
   double y = seg_y + d*sin(perp_heading);
   return {x,y};
 }
-  
+
 void update_gap(double our_car_s, double another_car_s, long gap[], long max_s) {
   long distance = another_car_s - our_car_s;
   if (distance > max_s / 2) {
@@ -161,10 +161,9 @@ void update_gap(double our_car_s, double another_car_s, long gap[], long max_s) 
 }
 
 // returns 0 or negative if no space
-double get_lane_score(double gap[], double speed, double car_speed) {
+double get_lane_score(double gap[], double speed[], double car_speed) {
   // check for space
-  if (gap[0] == -10000. && gap[1] == 10000.) return 0;
-  if (gap[0] > -5. || gap[1] < 30.) return 0;
+  if (gap[0] > -10. || gap[1] < 30.) return 0;
   return gap[1];
 }
 
@@ -180,9 +179,9 @@ int main() {
   vector<double> map_waypoints_dy;
   
   // Waypoint map to read from
-//  string map_file_ = "../data/highway_map.csv";
-  string map_file_ = "../data/highway_map_bosch1.scv";
-
+  string map_file_ = "../data/highway_map.csv";
+  //string map_file_ = "../data/highway_map_bosch1.scv";
+  
   ifstream in_map_(map_file_.c_str(), ifstream::in);
   
   string line;
@@ -214,8 +213,6 @@ int main() {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
-//    auto sdata = string(data).substr(0, length);
-//    cout << sdata << endl;
     if (length && length > 2 && data[0] == '4' && data[1] == '2') {
       auto s = hasData(data);
       if (s != "") {
@@ -245,99 +242,109 @@ int main() {
           int prev_size = previous_path_x.size();
           // each lane is 4 meters wide
           double lane_center = 4. * (double)lane + 2.;
-
-///          cout << prev_size << " : car_delta_s:" << end_path_s - car_s << endl;
-
+          
           if (prev_size > 0) {
             car_s = end_path_s;
           }
           
-          bool is_close_to_lane_center = car_d < lane_center + 2 && car_d > lane_center - 2;
+          bool is_target_lane = true;//car_d < lane_center + 2 && car_d > lane_center - 2;
           
-          if (is_close_to_lane_center) {
-            bool too_close = false;
-            bool change_lane = false;
-            double left_gap[] = {-10000., 10000.};
-            double right_gap[] = {-10000., 10000.};
-            double left_speed = 100.;
-            double right_speed = 100.;
-            double free_space_ahead = 0;
-            double car_s_now = j[1]["s"];
-            
-            // Compute front car distance and left/right gaps
-            for (int i = 0; i < sensor_fusion.size(); i++) {
-              double check_car_d = sensor_fusion[i][6];
+          bool too_close = false;
+          bool change_lane = false;
+          double left_gap[] =  {-10000., 10000.};
+          double right_gap[] = {-10000., 10000.};
+          if (lane == 0) {
+            left_gap[0] = left_gap[1] = 0.;
+          }
+          if (lane == 2) {
+            right_gap[0] = right_gap[1] = 0.;
+          }
+          double left_speed[] = {0., 100.};
+          double right_speed[] = {0., 100.};
+          double free_space_ahead = 0;
+          double car_s_now = j[1]["s"];
+          
+          // Compute front car distance and left/right gaps
+          for (int i = 0; i < sensor_fusion.size(); i++) {
+            double check_car_d = sensor_fusion[i][6];
+            double vx = sensor_fusion[i][3];
+            double vy = sensor_fusion[i][4];
+            double check_speed = sqrt(vx * vx + vy * vy);
+            double check_car_s = sensor_fusion[i][5];
+            // if using previous points can project a value outward in time
+            // we are looking where the car is in the future: 1 sec and 2 sec
+            double check_car_s1 = check_car_s  + (double)prev_size * .02 * check_speed;
+            // negative if behind
+            double check_car_distance_now = check_car_s - car_s_now;
+            double check_car_distance_future = check_car_s1 - car_s;
+
+            if (check_car_d < lane_center + 2 && check_car_d > lane_center - 2) {
               // if car in my lane
-              double vx = sensor_fusion[i][3];
-              double vy = sensor_fusion[i][4];
-              double check_speed = sqrt(vx * vx + vy * vy);
-              double check_car_s = sensor_fusion[i][5];
-              // if using previous points can project a value outward in time
-              // we are looking where the car is in the future: 1 sec and 2 sec
-              double check_car_s1 = check_car_s  + (double)prev_size * .02 * check_speed;
-              // negative if behind
-              double check_car_distance_now = check_car_s - car_s_now;
-              
-              if (check_car_d < lane_center + 2 && check_car_d > lane_center - 2) {
-                // if car is ahead of us
-                if (check_car_s1 > car_s && (check_car_s1 - car_s) < 30) {
-                  change_lane = true;
-                  too_close = true;
-                  free_space_ahead = check_car_s1 - car_s;
-                }
-              } else if (check_car_d < lane_center - 2 && check_car_d > lane_center - 6) {
-                // if car in left lane
-                if (check_car_distance_now < 0 && check_car_distance_now > left_gap[0]) {
-                  // the car is behind us
-  //                update_gap(car_s, check_car_s2, left_gap, max_s);
-                  left_gap[0] = check_car_distance_now;
-                } else if (check_car_distance_now >= 0 && (check_car_s1 - car_s) < left_gap[1]) {
-                  // if the car is ahead of us
-                  left_gap[1] = check_car_s1 - car_s;
-                  left_speed = check_speed;
-                }
-              } else if (check_car_d < lane_center + 6 && check_car_d > lane_center + 2) {
-                // if car in right lane
-                if (check_car_distance_now < 0 && check_car_distance_now > right_gap[0]) {
-                  // is the car is behind us
-                  // update_gap(car_s, check_car_s2, right_gap, max_s);
-                  right_gap[0] = check_car_distance_now;
-                } else if (check_car_distance_now  >= 0 && (check_car_s1 - car_s) < right_gap[1]) {
-                  // if the car is ahead of us
-                  right_gap[1] = (check_car_s1 - car_s);
-                  right_speed = check_speed;
-                }
+              if (check_car_distance_now > 0    // if car is ahead of us
+                    && check_speed < car_speed  // if car moves slower
+                    && check_car_s1 > car_s     // if car is still ahead in the future
+                    && check_car_distance_future < 30) {
+                change_lane = true;
+                too_close = true;
+                free_space_ahead = check_car_s1 - car_s;
+              }
+            } else if (check_car_d < lane_center - 2 && check_car_d > lane_center - 6) {
+              // if car in left lane
+              if (check_car_distance_now < 0    // the car is behind us
+                    && check_car_distance_future > left_gap[0]) {
+                left_gap[0] = check_car_distance_future;
+                left_speed[0] = check_speed;
+              } else if (check_car_distance_now >= 0 // if the car is ahead of us
+                   && check_car_distance_future < left_gap[1]) {
+                left_gap[1] = check_car_distance_future;
+                left_speed[1] = check_speed;
+              }
+            } else if (check_car_d < lane_center + 6 && check_car_d > lane_center + 2) {
+              // if car in right lane
+              if (check_car_distance_now < 0   // the car is behind us
+                    && check_car_distance_future > right_gap[0]) {
+                right_gap[0] = check_car_distance_future;
+                right_speed[0] = check_speed;
+              } else if (check_car_distance_now  >= 0  // the car is ahead of us
+                    && check_car_distance_future < right_gap[1]) {
+                right_gap[1] = check_car_distance_future;
+                right_speed[1] = check_speed;
               }
             }
+          }
+          if (is_target_lane) {
             if (change_lane) {
               free_space_ahead += 0;
               double left_score = get_lane_score(left_gap, left_speed, car_speed); // returns negative if no space
               double right_score = get_lane_score(right_gap, right_speed, car_speed); // returns negative if no space
               cout << "[" << left_score << "-" << right_score << "] " << left_gap[0] << ".." << left_gap[1] << " : "<< right_gap[0] << ".." << right_gap[1] << endl;
               double delta = right_score - left_score;
-              if (delta > 0 && lane < 3) {
+              if (delta > 0 && lane < 2) {
                 // move to the right
                 cout << "move to the right " << delta << endl;
-                //ref_velocity -= .18;
                 lane++;
               } else if (delta < 0 && lane > 0) {
                 // move to the left
                 cout << "move to the left " << delta << endl;
                 lane--;
-                //ref_velocity -= .18;
-              } else if (delta  == 0) {
-                if (lane == 0) {
-                    lane++;
-                } else {
+              } else if (delta == 0 && right_score > 0 ) {
+                if (lane > 0) {
                     lane--;
+                } else if (lane < 2) {
+                    lane++;
                 }
-              } else {//if (left_score <= 0 && right_score <= 0) {
+              } else {
+                cout << lane_center - car_d;
                 if (too_close) {
-                  cout << "slow down" << endl;
+                  cout << " slow down: " << ref_velocity;
                   if (ref_velocity > .112) {
                     ref_velocity -= .112;
+                  } else if (ref_velocity < MAX_SPEED - .224) {
+                    // accelerate
+                    ref_velocity += .224;
                   }
                 }
+                cout << endl;
               }
             } else if (ref_velocity < MAX_SPEED - .336) {
               // accelerate
@@ -346,7 +353,17 @@ int main() {
               // enjoy the ride
             }
           } else {
-            cout << "changing lane..." << endl;
+            cout << lane_center - car_d;
+            if (too_close) {
+              cout << " slow down " << ref_velocity;
+              if (ref_velocity > .112) {
+                ref_velocity -= .112;
+              } else if (ref_velocity < MAX_SPEED - .224) {
+                // accelerate
+                ref_velocity += .224;
+              }
+            }
+            cout << endl;
           }
           
           // Create a list of widedy spaced points, evenly spaced at 30 meters
@@ -360,7 +377,7 @@ int main() {
           double ref_x_prev = car_x - cos(car_yaw);
           double ref_y_prev = car_y - sin(car_yaw);
           double ref_yaw = deg2rad(car_yaw);
-
+          
           if (prev_size > 1) {
             ref_x = previous_path_x[prev_size - 1];
             ref_y = previous_path_y[prev_size - 1];
@@ -373,7 +390,7 @@ int main() {
           pts_x.push_back(ref_x);
           pts_y.push_back(ref_y_prev);
           pts_y.push_back(ref_y);
-
+          
           // In Frenet add evenly 30 meters spaced points ahead of the starting reference
           vector<double> next_wp0 = getXY(car_s + 30, lane_center, map_waypoints_s, map_waypoints_x, map_waypoints_y);
           vector<double> next_wp1 = getXY(car_s + 60, lane_center, map_waypoints_s, map_waypoints_x, map_waypoints_y);
@@ -398,10 +415,10 @@ int main() {
               }
             }
           }
-//          for (int i = 0; i < pts_x.size(); i++) {
-//            cout << pts_x[i] << ", ";
-//          }
-//          cout << endl;
+          //          for (int i = 0; i < pts_x.size(); i++) {
+          //            cout << pts_x[i] << ", ";
+          //          }
+          //          cout << endl;
           // Spline
           tk::spline s;
           s.set_points(pts_x, pts_y);
