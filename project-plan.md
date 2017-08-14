@@ -124,12 +124,12 @@ While running our program we'll have updates from the simulator in the form of a
   }
 ```
 
-## Trajectory generation
+## The Trajectory
 
 We'll use a simple spline-based method to generate jerk minimized trajectory. Following are steps on creating the car trajectory on every simulator iteration:
 
-#### 1. Create a list of widedy spaced points, evenly spaced at 30 meters
-Spline fit 5 points: two behing and three ahead in Cartesian space. Two points behind are taken from the end of the previous path provided by the simulator. In the beginning or when previous path is empty we compute the current car state using a trigonometric projection:
+#### 1. Creating a list of widedy spaced points, evenly spaced at 30 meters for spline fit
+Spline fits 5 points in Cartesian spacee: two behing and three ahead of the car we control. Two points behind are taken from the end of the previous path provided by the simulator. On the car starting point or when previous path is not available we compute the previous points using a trigonometric projection:
 ```c++
 // Create a list of widedy spaced points, evenly spaced at 30 meters.
 // Later we'll interpolate these points with spline and use to generate next points.
@@ -157,8 +157,7 @@ pts_y.push_back(ref_y_prev);
 pts_y.push_back(ref_y);
 ```
 
-As a future points we add in Frenet evenly 30 meters spaced points ahead of the starting reference:
-
+For the future points we add evenly 30 meters spaced points ahead of the starting reference in Frenet space:
 ```c++
 vector<double> next_wp0 = getXY(car_s + 30, lane_center, map_waypoints_s, map_waypoints_x, map_waypoints_y);
 vector<double> next_wp1 = getXY(car_s + 60, lane_center, map_waypoints_s, map_waypoints_x, map_waypoints_y);
@@ -171,9 +170,9 @@ pts_y.push_back(next_wp1[1]);
 pts_y.push_back(next_wp2[1]);
 ```          
 
-#### 2. Interpolate sparce spline points with spline and generate next path points
+#### 2. Interpolating sparce points with spline and generating future path points
 
-In order to generate evenly distributed path points we will shift and rotate car reference angle to 0 degrees:
+In order to generate evenly distributed path points we will shift coordinates and rotate car reference angle to 0 degrees:
 ```c++
 for (int i = 0; i < pts_x.size(); i++) {
   double shift_x = pts_x[i] - ref_x;
@@ -182,12 +181,12 @@ for (int i = 0; i < pts_x.size(); i++) {
   pts_y[i] = shift_y * cos(-ref_yaw) + shift_x * sin(-ref_yaw);
 }
 ```
-Now we will use a spline to fill the actual x, y points to use for the planner:
+Then we will use a spline to fill the actual x, y points to use for the planner:
 ```c++
 tk::spline s;
 s.set_points(pts_x, pts_y);
 ```
-We calulate how to break up spline point so that we travel at our desired reference velocity:
+We calulate how to break up spline point so that we travel at our desired reference velocity by using simple equasion:
 ```c++
 double target_x = 30.;
 double target_y = s(target_x);
@@ -198,14 +197,14 @@ double step = target_dist / (.02 * ref_velocity / 2.24);
 vector<double> next_x_vals;
 vector<double> next_y_vals;
 ```
-We start with all previous points (the points car actually moved):
+We start filling the path planner with available previous points (the points car actually moved):
 ```c++
 for (int i = 0; i < previous_path_x.size(); i++) { 
   next_x_vals.push_back(previous_path_x[i]);
   next_y_vals.push_back(previous_path_y[i]);
 }
 ```
-Then we fill up the rest of our path planner rotating back to normal corrdinates since we've rotated it earlier. 
+Then we fill up the rest of our path planner by rotating back to normal corrdinates since we've rotated it earlier. 
 Note: here we'll always output 50 points.
 ```c++
 for (int i = 1; i <= 50 - previous_path_x.size(); i++) {
@@ -226,13 +225,16 @@ for (int i = 1; i <= 50 - previous_path_x.size(); i++) {
 }
 ```
 
-### Planner
+## The Planner
 
-Current implementation uses a simple state machine and a planning scheme to control the car. The car will prefer to stay in the current lane and drive in constant speed close to speed limit. If there is a car ahead in a close proximity with a slower speed then check if we can pass the car on the left ot right lane. If both lanes are available chose the lane with the highest score. If passing is not possible then slow down remaing in the same lane following the car ahead. 
+Our implementation uses a simple planning scheme with a state machine to control the car. The car will prefer to stay in the current lane and drive in constant speed close to speed limit. If there is a car ahead in a close proximity with a slower speed then check if it is safe to pass on the left ot right lane. If both lanes are available for passing the car ahead we chose the lane with the highest score. The score is computed based on the front/back cars speed and distance. If passing on both left and right lanes is not safe then we slow down and remain in the same lane following the car ahead accelerating when we have enough space ahead. 
 
 ## Result and Reflection
 
-There are two parts of this project: one is how to generate smooth trajectories that meet the minimum requirement, another one is to plan a feasible trajectory for the car to drive as fast as possible avoiding incidents. Big parts of effort were generating smooth trajectories and tuning up state transitioining. Future work should include:
+There are two parts of this project: one is how to generate smooth trajectories that meet the minimum requirement, another one is how to plan a feasible trajectory for the car to drive as fast as possible below the speed limit avoiding incidents. Big parts of effort are generating smooth trajectories and tuning up state transitioining. We were able to run 48 miles without accidents on the project track [`data/highway_map.csv`](data/highway_map.csv) using [Term 3 Simulator v1.2](https://github.com/udacity/self-driving-car-sim/releases/tag/T3_v1.2). We also were able to run 4 out 5 races on Bosch'c Path Planning Challenge track [`data/highway_map_bosch1.scv`](data/highway_map_bosch1.scv) using [Bosch Challenge Track 1 simulator](https://github.com/udacity/Bosch-Challenge/releases/tag/v1.0)   
+
+
+Future work should include:
 
 Combine with MPC to find optimized trajectory. With MPC, using cost function we will be able to limit the speed and acceleration, and their variations.
 Implement a complete state machine to handle different sceneraios that could cause accidents. More traffic information should be incorporated in making decision on state change.
