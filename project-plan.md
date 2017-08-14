@@ -235,7 +235,7 @@ There are two parts of this project: one is how to generate smooth trajectories 
 ![path_planning_project_track](path_planning_project_track.jpg)
 
 We also were able to run 4 out 5 races on Bosch'c Path Planning Challenge track [`data/highway_map_bosch1.scv`](data/highway_map_bosch1.scv) using [Bosch Challenge Track 1 simulator](https://github.com/udacity/Bosch-Challenge/releases/tag/v1.0)   
-
+![path_planning_bosch_track](path_planning_bosch_track.jpg)
 
 Future work should include:
 
