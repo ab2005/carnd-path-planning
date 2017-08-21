@@ -179,8 +179,8 @@
       vector<double> map_waypoints_dy;
 
       // Waypoint map to read from
-      string map_file_ = "../data/highway_map.csv";
-      //string map_file_ = "../data/highway_map_bosch1.scv";
+      //string map_file_ = "../data/highway_map.csv";
+      string map_file_ = "../data/highway_map_bosch1.scv";
 
       ifstream in_map_(map_file_.c_str(), ifstream::in);
 
@@ -349,10 +349,10 @@
                     // cout << endl;
                   }
                 } else if (ref_velocity < MAX_SPEED / 3) {
-                  ref_velocity += .42;
+                  ref_velocity += .36;
                 } else if (ref_velocity < MAX_SPEED / 2) {
-                  ref_velocity += .42;
-                } else if (ref_velocity > MAX_SPEED - 0.44 && ref_velocity < MAX_SPEED - .026) {
+                  ref_velocity += .36;
+                } else if (ref_velocity > MAX_SPEED - 0.36 && ref_velocity < MAX_SPEED - .026) {
                   ref_velocity += .026   ;
                 } else if (ref_velocity < MAX_SPEED - 0.36) {
                   // accelerate
@@ -448,8 +448,15 @@
               }
               // then fill up the rest of our path planner(here we'll always output 50 points)
               // Note: previous path is how many points car actually mooved
-              for (int i = 1; i <= 50 - previous_path_x.size(); i++) {
-                double x_point = x_add_on + target_x / step;
+              double dx = target_x / step;
+              int num_points = 50 - previous_path_x.size();
+//              cout << car_s << ", speed="<< car_speed << " num_points=" << num_points << " dx=" << dx << endl;
+              for (int i = 1; i <= num_points; i++) {
+                double x_point = x_add_on + dx;
+                if (car_speed < MAX_SPEED - 33.) {
+                  cout << car_s << ", speed="<< car_speed << " num_points=" << num_points << " dx=" << dx << endl;
+                  x_point += i * dx * 0.063;
+                }
                 double y_point = s(x_point);
                 x_add_on = x_point;
 
@@ -516,83 +523,3 @@
       }
       h.run();
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
